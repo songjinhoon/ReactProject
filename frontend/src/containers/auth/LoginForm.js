@@ -29,7 +29,7 @@ const LoginForm = () => {
     }, [dispatch]);
 
     return (
-        <AuthForm type="login" form={form} onChange={onChange} onSubmit={onsubmit}></AuthForm>
+        <AuthForm type="login" form={form} onChange={onChange} onSubmit={onSubmit}></AuthForm>
     );
 };
 
