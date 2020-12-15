@@ -1,4 +1,4 @@
-import Post from '../model/post';
+import Post from '../../model/post';
 import mongoose from 'mongoose';
 import Joi from '@hapi/joi';
 
@@ -12,16 +12,24 @@ export const checkObjectId = (ctx, next) => {
     return next();
 }
 
-export const list =  async ctx => {
-    try{
-        const posts = await Post.find().exec();
-        ctx.body = posts;
-    }catch(e){
-        ctx.throw(500, e);
+export const list = async ctx => {
+    const page = parseInt(ctx.query.page || '1', 10);
+    if(page < 1){
+        ctx.status = 400;
+        return;
+    }else{
+        try{
+            const posts = await Post.find().sort({_id: -1}).limit(10).skip((page - 1)*10).exec();
+            const postCount = await Post.countDocuments().exec();
+            ctx.set('Last-Page', Math.ceil(postCount / 10));
+            ctx.body = posts.map(post => post.toJSON()).map(post => ({...post, body: post.body.length < 200 ? post.body : `${post.body.slice(0,200)}...`}));
+        }catch(e){
+            ctx.throw(500, e);
+        }
     }
 };
 
-export const read = ctx => {
+export const read = async ctx => {
     const {title, body, tags} = ctx.request.body;
     const post = new Post({title, body, tags});
     try{
@@ -58,6 +66,27 @@ export const remove = ctx => {
 
 };
 
-export const update = ctx => {
-
+export const update = async ctx => {
+    const schema = Joi.object().keys({
+        title: Joi.string(),
+        body: Joi.string(),
+        tags: Joi.array().items(Joi.string())
+    });
+    if(schema.validate(ctx.request.body).error){
+        ctx.status = 400;
+        ctx.body = schema.validate(ctx.request.body).error;
+        return;
+    }else{
+        try{
+            const {id} = ctx.params;
+            const post = await Post.findByIdAndUpdate(id, ctx.request.body, {new: true}).exec();
+            if(!post){
+                ctx.status = 404;
+                return;
+            }
+            ctx.body = post;
+        }catch(e){
+            ctx.throw(500, e);
+        }
+    }
 };
