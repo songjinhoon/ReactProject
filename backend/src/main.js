@@ -5,6 +5,7 @@ import bodyParser from 'koa-bodyparser';
 import mongoose from 'mongoose';
 import api from './api';
 import createFakeData from './createFakeData';
+import jwtMiddleware from './lib/jwtMiddleware';
 
 const {PORT, MONGO_URI} = process.env;
 
@@ -27,6 +28,7 @@ router.use('/api', api.routes());
 
 /* Koa 설정 */
 app.use(bodyParser()); // 라우터 적용 전에 bodyParser 적용
+app.use(jwtMiddleware); // jwt미들웨어 적용
 app.use(router.routes()).use(router.allowedMethods()); // 서버에 라우터 적용
 
 const port = PORT || 4000; 
