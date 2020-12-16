@@ -35,13 +35,16 @@ const initialState = {
 };
 
 const auth = handleActions({
-  [CHANGE_FIELD]: (state, {payload: {form, key, value}}) => ({
-    ...state, 
-    [form]: {...state[form], [key]: value}
-  }),
+  [CHANGE_FIELD]: (state, {payload: {form, key, value}}) => ({...state, [form]: {...state[form], [key]: value}}),
   [INITIALIZE_FORM]: (state, {payload: form}) => ({...state, authError: null, [form]: initialState[form]}),
-  [REGISTER_SUCCESS]: (state, {payload: auth}) => ({...state, authError: null, auth}),
-  [REGISTER_FAILURE]: (state, {payload: error}) => ({...state, authError: error}),
+  [REGISTER_SUCCESS]: (state, {payload: auth}) => {
+    console.log('시점3@');
+    return ({...state, authError: null, auth});
+  },
+  [REGISTER_FAILURE]: (state, {payload: error}) => {
+    console.log('시점4@');
+    return ({...state, authError: error});
+  },
   [LOGIN_SUCCESS]: (state, {payload: auth}) => ({...state, authError: null, auth}),
   [LOGIN_FAILURE]: (state, {payload: error}) => ({...state, authError: error}),
 }, initialState);

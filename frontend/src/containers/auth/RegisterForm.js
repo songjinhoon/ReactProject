@@ -23,10 +23,12 @@ const RegisterForm = () => {
     const onSubmit = e => {
         e.preventDefault();
         const {username, password, passwordConfirm} = form;
+        console.log(username + ' :: ' + password);
         if(password !== passwordConfirm){
             return;
         }else{
-            dispatch(register({username, password}));
+            const obj = {username, password};
+            dispatch(register(obj));
         }
     };
 
