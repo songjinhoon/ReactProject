@@ -10,11 +10,6 @@ import MainPage from './routes/MainPage';
 const App = () => {
     return (
         <>
-            {/* <Route
-                component={PostListPage}
-                path={['/@:username', '/']}
-                exact
-            ></Route> */}
             <Route component={MainPage} path="/" exact></Route>
             <Route component={LoginPage} path="/login"></Route>
             <Route component={RegisterPage} path="/register"></Route>

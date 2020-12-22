@@ -16,7 +16,7 @@ export const register = async ctx => {
         try{
             const exists = await User.findByUsername(username);
             if(exists){
-                ctx.stattus = 409;
+                ctx.status = 409;
                 return;
             }
             const user = new User({username});
