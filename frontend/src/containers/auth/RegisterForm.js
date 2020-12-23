@@ -1,14 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeField, initializeForm } from '../../modules/auth';
 import AuthForm from '../../components/auth/AuthForm';
 import { postRegister } from '../../modules/auth';
+import { getCheck } from '../../modules/user';
+import { withRouter } from 'react-router-dom';
 
-
-const RegisterForm = () => {
+const RegisterForm = ({history}) => {
+    const [error, setError] = useState(null);
     const dispatch = useDispatch();
-    const {form, auth, authError} = useSelector(({auth}) => ({
-        form: auth.register
+    const {form, auth, authError, user} = useSelector(({auth, user}) => ({
+        form: auth.register,
+        auth: auth.auth,
+        authError: auth.authError,
+        user: user.user
     }));
     const onChange = e => {
         const {value, name} = e.target;
@@ -21,12 +26,25 @@ const RegisterForm = () => {
     const onSubmit = e => {
         e.preventDefault();
         const {username, password, passwordConfirm} = form;
-        console.log(username + ' :: ' + password);
-        if(password !== passwordConfirm){
-            return;
-        }else{
-            dispatch(postRegister({username, password}));
+        if([username, password, passwordConfirm].includes('')){
+            setError('빈 칸을 모두 입력해주세요.');
+            return ;
         }
+        if(password !== passwordConfirm){
+            setError('비밀번호가 일치하지 않습니다.');
+            dispatch(changeField({
+                form: 'register',
+                key: 'password',
+                value: ''
+            }));
+            dispatch(changeField({
+                form: 'register',
+                key: 'passwordConfirm',
+                value: ''
+            }));
+            return;
+        }
+        dispatch(postRegister({username, password}));
     };
 
     useEffect(() => {
@@ -35,18 +53,37 @@ const RegisterForm = () => {
 
     useEffect(() => {
         if(authError){
-            console.log('오류발생');
-            console.log(authError);
+            switch(authError.response.status){
+                case 400:
+                    setError('계정명은 최소3~최대20 사이입니다.');
+                    break;
+                case 409:
+                    setError('이미 존재하는 계정명입니다.');
+                    break;
+                case 500:
+                    setError('회원 가입 실패');
+                    break;
+                default :
+                    break;
+            }
+            return ;
         }
         if(auth){
             console.log('회원가입 성공');
             console.log(auth);
+            dispatch(getCheck());
         }
-    }, [authError, auth]);
+    }, [authError, auth, dispatch]);
+
+    useEffect(() => {
+        if(user){
+            history.push('/');
+        }
+    }, [user, history]);
 
     return (
-        <AuthForm type="register" form={form} onChange={onChange} onSubmit={onSubmit}></AuthForm>
+        <AuthForm type="register" form={form} onChange={onChange} onSubmit={onSubmit} error={error}></AuthForm>
     );
 };
 
-export default RegisterForm;
+export default withRouter(RegisterForm);
