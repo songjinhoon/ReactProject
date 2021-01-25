@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeField, initializeForm } from '../../modules/auth';
 import AuthForm from '../../components/auth/AuthForm';
-import { postLogin } from '../../modules/auth';
-import { getCheck } from '../../modules/user';
+import { loginUser } from '../../modules/auth';
+import { checkUser } from '../../modules/user';
 import { withRouter } from 'react-router-dom';
 
 const LoginForm = ({history}) => {
@@ -28,7 +28,7 @@ const LoginForm = ({history}) => {
     const onSubmit = (e) => {
         e.preventDefault();
         const {username, password} = form;
-        dispatch(postLogin({username, password}));
+        dispatch(loginUser({username, password}));
     };
 
     useEffect(() => {
@@ -44,13 +44,18 @@ const LoginForm = ({history}) => {
         if(auth){
             console.log('로그인 성공');
             console.log(auth);
-            dispatch(getCheck());
+            dispatch(checkUser());
         }
     }, [authError, auth, dispatch]);
 
     useEffect(() => {
         if(user){
             history.push('/');
+            try{
+                localStorage.setItem('user', JSON.stringify(user));
+            }catch(e){
+                console.log('localStorage is not working');
+            }
         }
     }, [history, user]);
 

@@ -2,19 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeField, initializeForm } from '../../modules/auth';
 import AuthForm from '../../components/auth/AuthForm';
-import { postRegister } from '../../modules/auth';
-import { getCheck } from '../../modules/user';
+import { registerUser } from '../../modules/auth';
+import { checkUser } from '../../modules/user';
 import { withRouter } from 'react-router-dom';
 
 const RegisterForm = ({history}) => {
     const [error, setError] = useState(null);
     const dispatch = useDispatch();
-    const {form, auth, authError, user} = useSelector(({auth, user}) => ({
-        form: auth.register,
-        auth: auth.auth,
-        authError: auth.authError,
-        user: user.user
-    }));
+    const {form, auth, authError, user} = useSelector(({auth, user}) => {
+        console.log('후후후후');
+        
+        return {
+            form: auth.register,
+            auth: auth.auth,
+            authError: auth.authError,
+            user: user.user
+        }
+    });
     const onChange = e => {
         const {value, name} = e.target;
         dispatch(changeField({
@@ -44,7 +48,7 @@ const RegisterForm = ({history}) => {
             }));
             return;
         }
-        dispatch(postRegister({username, password}));
+        dispatch(registerUser({username, password}));
     };
 
     useEffect(() => {
@@ -71,13 +75,18 @@ const RegisterForm = ({history}) => {
         if(auth){
             console.log('회원가입 성공');
             console.log(auth);
-            dispatch(getCheck());
+            dispatch(checkUser());
         }
     }, [authError, auth, dispatch]);
 
     useEffect(() => {
         if(user){
-            history.push('/');
+            //history.push('/');
+            try{
+                localStorage.setItem('user', JSON.stringify(user));
+            }catch(e){
+                console.log('localStorage is not working');
+            }
         }
     }, [user, history]);
 

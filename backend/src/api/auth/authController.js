@@ -1,4 +1,4 @@
-import Joi from '@hapi/joi';
+import Joi from '../../../node_modules/@hapi/joi';
 import User from '../../model/user';
 
 export const register = async ctx => {
@@ -6,31 +6,29 @@ export const register = async ctx => {
         username: Joi.string().alphanum().min(3).max(20).required(),
         password: Joi.string().required()
     });
-    const result = schema.validate(ctx.request.body);
-    if(result.error){
+    const scheamCheck = schema.validate(ctx.request.body);
+    if(scheamCheck.error){
         ctx.status = 400;
-        ctx.body = result.error;
+        ctx.body = scheamCheck.error;
         return ;
     }else{
-        const {username, password} = ctx.request.body;
+        const { username, password } = ctx.request.body;
         try{
             const exists = await User.findByUsername(username);
-            if(exists){
+            if(exists) {
                 ctx.status = 409;
                 return;
             }
-            const user = new User({username});
+            const user = new User({ username });
             await user.setPassword(password);
             await user.save();
-            
             ctx.body = user.serialize();
 
-            const token = user.generateToken();
-            ctx.cookies.set('access_token', token, {
+            ctx.cookies.set('access_token', user.generateToken(), {
                 maxAge: 1000 * 60 * 60 * 24 * 7, // 7일
                 httpOnly: true
             });
-        }catch(e){
+        }catch(e) {
             ctx.throw(500, e);
         }
     }
@@ -39,6 +37,7 @@ export const register = async ctx => {
 export const login = async ctx => {
     const {username, password} = ctx.request.body;
     if(!username || !password){
+        console.log(ctx);
         ctx.status = 401;
         return;
     }else{

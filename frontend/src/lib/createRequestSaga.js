@@ -14,7 +14,8 @@ export default function createRequestSaga(type, request){
             const response = yield call(request, action.payload);
             yield put({
                 type: SUCCESS,
-                payload: response.data
+                payload: response.data,
+                meta: response
             });
         }catch(e){
             yield put({
@@ -25,4 +26,3 @@ export default function createRequestSaga(type, request){
         }
     };
 }
-

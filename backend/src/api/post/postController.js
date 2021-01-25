@@ -1,11 +1,60 @@
 import Post from '../../model/post';
 import mongoose from 'mongoose';
 import Joi from '@hapi/joi';
+import sanitizeHtml from '../../../node_modules/sanitize-html';
 
-const {ObjectId} = mongoose.Types;
+/* HTML 필터링 시 허용 태그 및 속성 */
+const sanitizeOption = {
+    allowedTags: [ 'h1', 'h2', 'b', 'i', 'u', 's', 'p', 'ul', 'ol', 'li', 'blockquote', 'a', 'img' ],
+    allowedAttributes: {
+      a: ['href', 'name', 'target'],
+      img: ['src'],
+      li: ['class'],
+    },
+    allowedSchemes: ['data', 'http'],
+};
+
+/* HTML 제거 및 글자 수 제한 */
+const removeHtmlAndShorten = body => {
+    const filtered = sanitizeHtml(body, { allowedTags: [] });
+    return filtered.length < 200 ? filtered : `${filtered.slice(0,200)}...`;
+};
+
+export const checkOwnPost = (ctx, next) => {
+    const {user, post} = ctx.state;
+    if(post.user._id.toString() === user._id){
+        return next();
+    }else{
+        ctx.status = 403;
+        return ;
+    }
+};
+
+export const write = async ctx => {
+    const schema = Joi.object().keys({
+        title: Joi.string().required(),
+        body: Joi.string().required(),
+        tags: Joi.array().items(Joi.string()).required()
+    });
+    if(schema.validate(ctx.request.body).error){
+        ctx.status = 400;
+        ctx.body = schema.validate(ctx.request.body).error;
+        return;
+    }else{
+        const {title, body, tags} = ctx.request.body;
+        const post = new Post({title, body: sanitizeHtml(body, sanitizeOption), tags, user: ctx.state.user});
+        try{
+            await post.save();
+            ctx.body = post;
+        }catch(e){
+            ctx.throw(500, e);
+        }
+    }
+};
+
 export const getPostById = async (ctx, next) => {
     const {id} = ctx.params;
-    if(!ObjectId.isValid(id)){
+    if(!mongoose.Types.ObjectId.isValid(id)){
         ctx.status = 400;
         return;
     }else{
@@ -23,16 +72,6 @@ export const getPostById = async (ctx, next) => {
         }
     }
 }
-export const checkOwnPost = (ctx, next) => {
-    const {user, post} = ctx.state;
-    if(post.user._id.toString() === user._id){
-        return next();
-    }else{
-        ctx.status = 403;
-        return ;
-    }
-};
-
 
 export const list = async ctx => {
     const page = parseInt(ctx.query.page || '1', 10);
@@ -49,7 +88,15 @@ export const list = async ctx => {
             const posts = await Post.find(query).sort({_id: -1}).limit(10).skip((page - 1)*10).exec();
             const postCount = await Post.countDocuments(query).exec();
             ctx.set('Last-Page', Math.ceil(postCount / 10));
-            ctx.body = posts.map(post => post.toJSON()).map(post => ({...post, body: post.body.length < 200 ? post.body : `${post.body.slice(0,200)}...`}));
+            //ctx.body = posts.map(post => post.toJSON()).map(post => ({...post, body: post.body.length < 200 ? post.body : `${post.body.slice(0,200)}...`}));
+            // 아래 코드는 실행이 안될거임 ------------------------
+            // ctx.body = posts.map(post => ({
+            //     ...post, body: removeHtmlAndShorten(post.body)
+            // }));
+
+            ctx.body = posts.map(post => post.toJSON()).map(post => ({
+                ...post, body: removeHtmlAndShorten(post.body)
+            }));
         }catch(e){
             ctx.throw(500, e);
         }
@@ -60,27 +107,6 @@ export const read = async ctx => {
     ctx.body = ctx.state.post;
 };
 
-export const write = async ctx => {
-    const schema = Joi.object().keys({
-        title: Joi.string().required(),
-        body: Joi.string().required(),
-        tags: Joi.array().items(Joi.string()).required()
-    });
-    if(schema.validate(ctx.request.body).error){
-        ctx.status = 400;
-        ctx.body = schema.validate(ctx.request.body).error;
-        return;
-    }else{
-        const {title, body, tags} = ctx.request.body;
-        const post = new Post({title, body, tags, user: ctx.state.user});
-        try{
-            await post.save();
-            ctx.body = post;
-        }catch(e){
-            ctx.throw(500, e);
-        }
-    }
-};
 
 export const remove = ctx => {
 
@@ -97,9 +123,13 @@ export const update = async ctx => {
         ctx.body = schema.validate(ctx.request.body).error;
         return;
     }else{
+        const nextData = { ...ctx.request.body };
+        if(nextData.body) {
+            nextData.body = sanitizeHtml(nextData.body);
+        }
         try{
             const {id} = ctx.params;
-            const post = await Post.findByIdAndUpdate(id, ctx.request.body, {new: true}).exec();
+            const post = await Post.findByIdAndUpdate(id, nextData, {new: true}).exec();
             if(!post){
                 ctx.status = 404;
                 return;

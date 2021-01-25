@@ -1,36 +1,51 @@
+import { handleActions, createAction } from "../../node_modules/redux-actions";
+import { takeLatest, call } from "../../node_modules/redux-saga/effects";
 import createRequestSaga, { createRequestActionTypes } from "../lib/createRequestSaga";
-import * as authApi from '../lib/api/auth';
-import { handleActions, createAction } from "redux-actions";
-import { takeLatest } from '../../node_modules/redux-saga/effects';
+import * as authApi from "../lib/api/auth";
 
-/*
-    - 사용자 상태 처리 리덕스 모듈
-*/
-const [GET_CHECK, GET_CHECK_SUCCESS, GET_CHECK_FAILURE] = createRequestActionTypes('user/GET_CHECK');
+const [CHECK_USER, CHECK_USER_SUCCESS, CHECK_USER_FAILURE] = createRequestActionTypes('user/CHECK_USER');
+const TEMP_SET_USER = 'user/TEMP_SET_USER';
+const LOGOUT_USER = 'user/LOGOUT_USER';
 
-export const getCheck = createAction(GET_CHECK);
+export const checkUser = createAction(CHECK_USER);
+export const tempSetUser = createAction(TEMP_SET_USER, user => user); // 이거 ?
+export const logoutUser = createAction(LOGOUT_USER);
 
-const getCheckSaga = createRequestSaga(GET_CHECK, authApi.check);
+const checkUserSaga = createRequestSaga(CHECK_USER, authApi.check);
+function checkUserFailureSaga() {
+    try{
+        localStorage.removeItem('user');
+    }catch(e){
+        console.log('localStorage is not working');
+    }
+}
+function* logoutUserSaga(){
+    try {
+        yield call(authApi.logout);
+        localStorage.removeItem('user');
+    }catch(e) {
+        console.log(e);
+    }
+}
 export function* userSaga(){
-    yield takeLatest(GET_CHECK, getCheckSaga);
+    yield takeLatest(CHECK_USER, checkUserSaga);
+    yield takeLatest(CHECK_USER_FAILURE, checkUserFailureSaga);
+    yield takeLatest(LOGOUT_USER, logoutUserSaga);
 }
 
 const initialState = {
     user: null,
-    checkError: null
+    checkUserError: null
 };
 
 const user = handleActions({
-    [GET_CHECK_SUCCESS]: (state, {payload: user}) => ({
-        ...state,
-        user,
-        checkError: null
-    }),
-    [GET_CHECK_FAILURE]: (state, {payload: error}) => ({
-        ...state,
-        user: null,
-        checkError: error
-    })
+    //[CHECK_USER_SUCCESS]: (state, { payload: user }) => ({ ...state, user, checkUserError: null }),
+    //[CHECK_USER_FAILURE]: (state, { payload: error }) => ({ ...state, user: null, checkUserError: error }),
+    //[LOGOUT_USER]: (state) => ({ ...state,  user: null }),
+    [CHECK_USER_SUCCESS]: (state, action) => ({ ...state, user: action.payload, checkUserError: null }),
+    [CHECK_USER_FAILURE]: (state, action) => ({ ...state, user: null, checkUserError: action.payload }),
+    [TEMP_SET_USER]: (state, action) => ({ ...state, user: action.payload }),
+    [LOGOUT_USER]: () => initialState,
 }, initialState);
 
 export default user;

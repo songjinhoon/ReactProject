@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 import Button from '../common/Button';
 
 const AuthFormBlock = styled.div`
+    height: 300px;
     h3 {
         margin: 0;
         color: black;
         margin-bottom: 1rem;
     }
 `;
-
 const StyledInput = styled.input`
     font-size: 1rem;
     border: none;
@@ -26,7 +26,6 @@ const StyledInput = styled.input`
         margin-top: 1rem;
     }
 `;
-
 const Footer = styled.div`
     margin-top: 2rem;
     text-align: right;
@@ -38,7 +37,6 @@ const Footer = styled.div`
         }
     }
 `;
-
 const ButtonMarginTop = styled(Button)`
     margin-top: 1rem;
 `;
@@ -64,14 +62,14 @@ const AuthForm = ({type, form, onChange, onSubmit, error}) => {
             <form onSubmit={onSubmit}>
                 <StyledInput onChange={onChange} value={form.username} autoComplete="username" name="username" placeholder="아이디"></StyledInput>
                 <StyledInput onChange={onChange} value={form.password} autoComplete="new-password" name="password" placeholder="비밀번호" type="password"></StyledInput>
-                {type === 'register' && (
+                {type === "register" && (
                     <StyledInput onChange={onChange} value={form.passwordConfirm} autoComplete="new-password" name="passwordConfirm" placeholder="비밀번호 확인" type="password"></StyledInput>
                 )}
                 {error && <ErrorMessage>{error}</ErrorMessage>}
                 <ButtonMarginTop cyan fullWidth>{text}</ButtonMarginTop>
             </form>
             <Footer>
-                {type === "login" ? (<Link to="/register">회원가입</Link>) : <Link to="/login">로그인</Link>}
+                {type === "login" ? (<Link to="/auth/register">회원가입</Link>) : <Link to="/auth/login">로그인</Link>}
             </Footer>
         </AuthFormBlock>
     );

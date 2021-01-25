@@ -1,19 +1,19 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import { Link } from 'react-router-dom';
 
-const StyledButton = styled.button`
+const buttonStyle = css`
     border: none;
     border-radius: 4px;
     font-size: 1rem;
     font-weight: bold;
-    padding: 0.25rem 1rem;
+    //padding: 0.25rem 1rem;
     color: white;
     outline: none;
     cursor: pointer;
-
-    background: #0657f8;
+    background: #A4A4A4;
     &:hover {
-        background: #5086f0;
+        background: #BDBDBD;
     }
 
     ${(props) =>
@@ -34,6 +34,17 @@ const StyledButton = styled.button`
         `}
 `;
 
-const Button = (props) => <StyledButton {...props} />; // 바로 내보내지않고 새로운 Button을 만들어서 렌더링 해주는 이유는 자동 import를 위함
+// 바로 내보내지않고 새로운 Button을 만들어서 렌더링 해주는 이유는 자동 import를 위함
+const StyledButton = styled.button`
+    ${buttonStyle}
+`;
+
+const StyledLink = styled(Link)`
+    ${buttonStyle}
+`;
+
+const Button = props => {
+    return props.to ? (<StyledLink {...props} cyan={props.cyan ? 1 : 0}/>) : (<StyledButton  {...props}/>);
+};
 
 export default Button;
